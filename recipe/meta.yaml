@@ -49,7 +49,7 @@ requirements:
     - pip
     - python
     - pybind11
-    - libboost-devel
+    - libboost-headers
     - libblas
     - libcblas
     - colmap
