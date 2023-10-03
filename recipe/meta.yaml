@@ -15,7 +15,7 @@ source:
       - fix-glog-init.patch
 
 build:
-  number: 3
+  number: 4
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
@@ -49,7 +49,7 @@ requirements:
     - pip
     - python
     - pybind11
-    - boost-cpp
+    - libboost-headers
     - libblas
     - libcblas
     - colmap
@@ -72,7 +72,6 @@ requirements:
     - libglu                         # [linux]
   run:
     - python
-    - boost-cpp
     - {{ pin_compatible("numpy") }}
 
 test:
