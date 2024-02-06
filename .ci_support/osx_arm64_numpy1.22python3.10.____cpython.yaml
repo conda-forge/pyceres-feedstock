@@ -20,10 +20,6 @@ libblas:
 - 3.9 *netlib
 libcblas:
 - 3.9 *netlib
-libxcb:
-- '1.15'
-llvm_openmp:
-- '16'
 macos_machine:
 - arm64-apple-darwin20.0.0
 numpy:
