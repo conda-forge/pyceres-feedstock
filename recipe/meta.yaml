@@ -1,5 +1,5 @@
 {% set name = "pyceres" %}
-{% set version = "1.0" %}
+{% set version = "2.0" %}
 
 package:
   name: {{ name }}
@@ -7,7 +7,7 @@ package:
 
 source:
   - url: https://github.com/cvg/{{ name }}/archive/v{{ version }}.tar.gz
-    sha256: 47729ac53ac21b18071f5772194a92c1af296e7fced08274185952a0efb6833b
+    sha256: 00bbc4629997809c505669393b3bec97b2aa21ea8feffa2e4e9143dfde8eece5
     patches:
       - fix-cmake.patch
       - fixup-version-number.patch
@@ -15,7 +15,7 @@ source:
       - fix-glog-init.patch
 
 build:
-  number: 6
+  number: 0
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
