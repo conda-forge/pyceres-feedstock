@@ -1,0 +1,27 @@
+From 05ae11559860393fabd500b7db09612a07eb8ee1 Mon Sep 17 00:00:00 2001
+From: Paul-Edouard Sarlin <paul.edouard.sarlin@gmail.com>
+Date: Mon, 19 Feb 2024 08:20:04 +0100
+Subject: [PATCH] Free only if glog<0.7.0
+
+---
+ _pyceres/logging.h | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/_pyceres/logging.h b/_pyceres/logging.h
+index 189f6f2..3b8d53a 100644
+--- a/_pyceres/logging.h
++++ b/_pyceres/logging.h
+@@ -114,9 +114,12 @@ class LogMessageFatalThrow : public google::LogMessage {
+       : google::LogMessage(file, line, google::GLOG_ERROR, &message_),
+         prefix_(__MakeExceptionPrefix(file, line)) {
+     stream() << "Check failed: " << (*result.str_) << " ";
+-    // On LOG(FATAL) glog does not bother cleaning up CheckOpString
++    // On LOG(FATAL) glog<0.7.0 does not bother cleaning up CheckOpString
+     // so we do it here.
++#if !(defined(GLOG_VERSION_MAJOR) && \
++      (GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 7))
+     delete result.str_;
++#endif
+   };
+   ~LogMessageFatalThrow() noexcept(false) {
+     Flush();
