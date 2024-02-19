@@ -1,0 +1,197 @@
+From 762d2b73436c71c876599b8762cef8e6315a016b Mon Sep 17 00:00:00 2001
+From: Paul-Edouard Sarlin <paul.edouard.sarlin@gmail.com>
+Date: Fri, 9 Feb 2024 11:27:03 +0100
+Subject: [PATCH 1/5] Pin Ceres version
+
+---
+ CMakeLists.txt | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3574a26..b5c1a3e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,18 +1,7 @@
+ cmake_minimum_required(VERSION 3.10)
+ project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION})
+ 
+-find_package(Ceres REQUIRED)
+-if(NOT TARGET Ceres::ceres)
+-    # Older Ceres versions don't come with an imported interface target.
+-    add_library(Ceres::ceres INTERFACE IMPORTED)
+-    target_include_directories(
+-        Ceres::ceres INTERFACE ${CERES_INCLUDE_DIRS})
+-    target_link_libraries(
+-        Ceres::ceres INTERFACE ${CERES_LIBRARIES})
+-endif()
+-if(${CERES_VERSION} VERSION_LESS "2.1.0")
+-    message( SEND_ERROR "Ceres version >= 2.1 required, found ${CERES_VERSION}." )
+-endif()
++find_package(Ceres 2.1 REQUIRED)
+ 
+ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+ 
+
+From 3c8ba14b4316ff6d7c39231fcb959b5ce1641288 Mon Sep 17 00:00:00 2001
+From: Paul-Edouard Sarlin <paul.edouard.sarlin@gmail.com>
+Date: Fri, 9 Feb 2024 11:28:53 +0100
+Subject: [PATCH 2/5] Support glog <0.6.0
+
+---
+ CMakeLists.txt     | 6 +++++-
+ _pyceres/logging.h | 5 ++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b5c1a3e..6c5f5c6 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,5 +10,9 @@ find_package(pybind11 2.11.1 REQUIRED)
+ pybind11_add_module(pyceres _pyceres/bindings.cc)
+ target_include_directories(pyceres PRIVATE ${PROJECT_SOURCE_DIR})
+ target_link_libraries(pyceres PRIVATE glog::glog Ceres::ceres)
+-target_compile_definitions(pyceres PRIVATE VERSION_INFO="${PROJECT_VERSION}")
++target_compile_definitions(
++  pyceres
++  PRIVATE VERSION_INFO="${PROJECT_VERSION}"
++          GLOG_VERSION_MAJOR=${glog_VERSION_MAJOR}
++          GLOG_VERSION_MINOR=${glog_VERSION_MINOR})
+ install(TARGETS pyceres LIBRARY DESTINATION .)
+diff --git a/_pyceres/logging.h b/_pyceres/logging.h
+index bf6df04..ff8def4 100644
+--- a/_pyceres/logging.h
++++ b/_pyceres/logging.h
+@@ -211,7 +211,10 @@ void BindLogging(py::module& m) {
+       .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
+       .value("FATAL", Logging::LogSeverity::GLOG_FATAL)
+       .export_values();
+-  if (!google::IsGoogleLoggingInitialized()) {
++#if GLOG_VERSION_MAJOR >= 0 && GLOG_VERSION_MINOR >= 6
++  if (!google::IsGoogleLoggingInitialized())
++#endif
++  {
+     google::InitGoogleLogging("");
+     google::InstallFailureSignalHandler();
+     google::InstallFailureFunction(&PyBindLogTermination);
+
+From 72cafba769b8093a8a825cee79e428b9e92dc410 Mon Sep 17 00:00:00 2001
+From: Paul-Edouard Sarlin <paul.edouard.sarlin@gmail.com>
+Date: Fri, 9 Feb 2024 11:29:05 +0100
+Subject: [PATCH 3/5] Support glog >=0.7.0
+
+---
+ _pyceres/logging.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/_pyceres/logging.h b/_pyceres/logging.h
+index ff8def4..031bb67 100644
+--- a/_pyceres/logging.h
++++ b/_pyceres/logging.h
+@@ -105,7 +105,11 @@ class LogMessageFatalThrow : public google::LogMessage {
+         prefix_(__MakeExceptionPrefix(file, line)){};
+   LogMessageFatalThrow(const char* file,
+                        int line,
++#if GLOG_VERSION_MAJOR >= 0 && GLOG_VERSION_MINOR >= 7
++                       const google::logging::internal::CheckOpString& result)
++#else
+                        const google::CheckOpString& result)
++#endif
+       : google::LogMessage(file, line, google::GLOG_ERROR, &message_),
+         prefix_(__MakeExceptionPrefix(file, line)) {
+     stream() << "Check failed: " << (*result.str_) << " ";
+
+From 2d70b487086cb47ddaa9a4730b23c741d3ab9624 Mon Sep 17 00:00:00 2001
+From: Paul-Edouard Sarlin <paul.edouard.sarlin@gmail.com>
+Date: Fri, 9 Feb 2024 12:01:03 +0100
+Subject: [PATCH 4/5] Future-proof
+
+---
+ _pyceres/logging.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/_pyceres/logging.h b/_pyceres/logging.h
+index 031bb67..21eec4c 100644
+--- a/_pyceres/logging.h
++++ b/_pyceres/logging.h
+@@ -105,7 +105,7 @@ class LogMessageFatalThrow : public google::LogMessage {
+         prefix_(__MakeExceptionPrefix(file, line)){};
+   LogMessageFatalThrow(const char* file,
+                        int line,
+-#if GLOG_VERSION_MAJOR >= 0 && GLOG_VERSION_MINOR >= 7
++#if GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 7
+                        const google::logging::internal::CheckOpString& result)
+ #else
+                        const google::CheckOpString& result)
+@@ -215,7 +215,7 @@ void BindLogging(py::module& m) {
+       .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
+       .value("FATAL", Logging::LogSeverity::GLOG_FATAL)
+       .export_values();
+-#if GLOG_VERSION_MAJOR >= 0 && GLOG_VERSION_MINOR >= 6
++#if GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 6
+   if (!google::IsGoogleLoggingInitialized())
+ #endif
+   {
+
+From af03372b1cd84185942e967017e3c10d4d19128f Mon Sep 17 00:00:00 2001
+From: Paul-Edouard Sarlin <paul.edouard.sarlin@gmail.com>
+Date: Fri, 9 Feb 2024 15:17:57 +0100
+Subject: [PATCH 5/5] Handle older versions of glog
+
+---
+ CMakeLists.txt     | 13 ++++++++-----
+ _pyceres/logging.h |  6 ++++--
+ 2 files changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6c5f5c6..df3cc9f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,6 +1,13 @@
+ cmake_minimum_required(VERSION 3.10)
+ project(${SKBUILD_PROJECT_NAME} VERSION ${SKBUILD_PROJECT_VERSION})
+ 
++find_package(glog REQUIRED)
++if(DEFINED glog_VERSION_MAJOR)
++  # Older versions of glog don't export version variables.
++  add_definitions("-DGLOG_VERSION_MAJOR=${glog_VERSION_MAJOR}")
++  add_definitions("-DGLOG_VERSION_MINOR=${glog_VERSION_MINOR}")
++endif()
++
+ find_package(Ceres 2.1 REQUIRED)
+ 
+ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+@@ -10,9 +17,5 @@ find_package(pybind11 2.11.1 REQUIRED)
+ pybind11_add_module(pyceres _pyceres/bindings.cc)
+ target_include_directories(pyceres PRIVATE ${PROJECT_SOURCE_DIR})
+ target_link_libraries(pyceres PRIVATE glog::glog Ceres::ceres)
+-target_compile_definitions(
+-  pyceres
+-  PRIVATE VERSION_INFO="${PROJECT_VERSION}"
+-          GLOG_VERSION_MAJOR=${glog_VERSION_MAJOR}
+-          GLOG_VERSION_MINOR=${glog_VERSION_MINOR})
++target_compile_definitions(pyceres PRIVATE VERSION_INFO="${PROJECT_VERSION}")
+ install(TARGETS pyceres LIBRARY DESTINATION .)
+diff --git a/_pyceres/logging.h b/_pyceres/logging.h
+index 21eec4c..189f6f2 100644
+--- a/_pyceres/logging.h
++++ b/_pyceres/logging.h
+@@ -105,7 +105,8 @@ class LogMessageFatalThrow : public google::LogMessage {
+         prefix_(__MakeExceptionPrefix(file, line)){};
+   LogMessageFatalThrow(const char* file,
+                        int line,
+-#if GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 7
++#if defined(GLOG_VERSION_MAJOR) && \
++    (GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 7)
+                        const google::logging::internal::CheckOpString& result)
+ #else
+                        const google::CheckOpString& result)
+@@ -215,7 +216,8 @@ void BindLogging(py::module& m) {
+       .value("ERROR", Logging::LogSeverity::GLOG_ERROR)
+       .value("FATAL", Logging::LogSeverity::GLOG_FATAL)
+       .export_values();
+-#if GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 6
++#if defined(GLOG_VERSION_MAJOR) && \
++    (GLOG_VERSION_MAJOR > 0 || GLOG_VERSION_MINOR >= 6)
+   if (!google::IsGoogleLoggingInitialized())
+ #endif
+   {
