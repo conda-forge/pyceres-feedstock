@@ -8,8 +8,6 @@ package:
 source:
   - url: https://github.com/cvg/{{ name }}/archive/v{{ version }}.tar.gz
     sha256: e601982fdf85070165ae21253862b3bba1ddf388f859c57437fb04daf317ec79
-    patches:
-      - 36.patch
 
 build:
   number: 1
