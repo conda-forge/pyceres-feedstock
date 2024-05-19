@@ -12,13 +12,14 @@ source:
       - 39.patch
 
 build:
-  number: 1
+  number: 2
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
   build:
     - {{ compiler('cxx') }}
     - {{ compiler('c') }}
+    - {{ stdlib("c") }}
     - cmake
     - make                                   # [unix]
     - ninja                                  # [win]
@@ -30,7 +31,6 @@ requirements:
     - scikit-build                           # [build_platform != target_platform]
     - scikit-build-core                      # [build_platform != target_platform]
     - pkg-config
-    - sysroot_linux-64 2.17          # [linux64]
   host:
     - pip
     - python
@@ -46,8 +46,6 @@ requirements:
     - libcblas
   run:
     - python
-    - {{ pin_compatible("numpy") }}
-    - __osx >={{ MACOSX_DEPLOYMENT_TARGET|default("10.9") }}  # [osx and x86_64]
 
 test:
   imports:
