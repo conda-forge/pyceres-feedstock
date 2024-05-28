@@ -1,5 +1,5 @@
 {% set name = "pyceres" %}
-{% set version = "2.1" %}
+{% set version = "2.2" %}
 
 package:
   name: {{ name }}
@@ -7,12 +7,12 @@ package:
 
 source:
   - url: https://github.com/cvg/{{ name }}/archive/v{{ version }}.tar.gz
-    sha256: e601982fdf85070165ae21253862b3bba1ddf388f859c57437fb04daf317ec79
+    sha256: 043df5a7355f563b513052bd35ebef1a721319ea4efffaa0a6514a864025fb27
     patches:
       - 39.patch
 
 build:
-  number: 2
+  number: 0
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
