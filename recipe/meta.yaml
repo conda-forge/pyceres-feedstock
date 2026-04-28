@@ -3,14 +3,16 @@
 
 package:
   name: {{ name }}
-  version: {{ version }}
+  version: "{{ version }}"
 
 source:
   - url: https://github.com/cvg/{{ name }}/archive/v{{ version }}.tar.gz
     sha256: a5893077a39066c855ae77ca4b09522e5ea11e552f1c39ebd51b9bc68a4a854d
+    patches:
+      - fix-pybind11-tuple-return-type.patch
 
 build:
-  number: 0
+  number: 1
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:

@@ -1,0 +1,16 @@
+diff --git a/_pyceres/core/cost_functions.h b/_pyceres/core/cost_functions.h
+index 1b79800..5dc64db 100644
+--- a/_pyceres/core/cost_functions.h
++++ b/_pyceres/core/cost_functions.h
+@@ -112,9 +112,10 @@ void BindCostFunctions(py::module& m) {
+              }
+            })
+       .def(
+           "evaluate",
+-          [](ceres::CostFunction& self, const py::args& parameters) {
++          [](ceres::CostFunction& self,
++             const py::args& parameters) -> py::object {
+             THROW_CHECK_EQ(parameters.size(),
+                            self.parameter_block_sizes().size());
+             std::vector<double*> params(parameters.size());
+             Eigen::Matrix<double, -1, -1, Eigen::RowMajor> residuals(
