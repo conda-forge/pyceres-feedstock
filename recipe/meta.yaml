@@ -44,6 +44,8 @@ requirements:
     - gflags
     - libblas
     - libcblas
+    - eigen
+    - eigen-abi-devel
   run:
     - python
 
