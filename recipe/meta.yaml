@@ -12,7 +12,7 @@ source:
       - fix-pybind11-tuple-return-type.patch
 
 build:
-  number: 1
+  number: 2
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
@@ -44,6 +44,8 @@ requirements:
     - gflags
     - libblas
     - libcblas
+    - eigen
+    - eigen-abi-devel
   run:
     - python
 
