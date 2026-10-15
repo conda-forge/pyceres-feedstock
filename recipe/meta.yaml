@@ -12,7 +12,7 @@ source:
       - fix-pybind11-tuple-return-type.patch
 
 build:
-  number: 3
+  number: 4
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
@@ -35,6 +35,9 @@ requirements:
     - pip
     - python
     - pybind11
+    # run_exports `pybind11-abi ==<internals version>` so pyceres is only
+    # co-installed with pycolmap/pixsfm builds sharing its pybind11 internals
+    - pybind11-abi
     - scikit-build
     - scikit-build-core
     - libboost-headers
