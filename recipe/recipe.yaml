@@ -15,7 +15,7 @@ source:
       - fix-pybind11-tuple-return-type.patch
 
 build:
-  number: 6
+  number: 7
   script: ${{ PYTHON }} -m pip install . -vv
 
 requirements:
