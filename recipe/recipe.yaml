@@ -1,0 +1,77 @@
+schema_version: 1
+
+context:
+  name: pyceres
+  version: "2.6"
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  - url: https://github.com/cvg/${{ name }}/archive/v${{ version }}.tar.gz
+    sha256: a5893077a39066c855ae77ca4b09522e5ea11e552f1c39ebd51b9bc68a4a854d
+    patches:
+      - fix-pybind11-tuple-return-type.patch
+
+build:
+  number: 7
+  script: ${{ PYTHON }} -m pip install . -vv
+
+requirements:
+  build:
+    - ${{ compiler('cxx') }}
+    - ${{ compiler('c') }}
+    - ${{ stdlib("c") }}
+    - cmake
+    - if: unix
+      then: make
+    - if: win
+      then: ninja
+    - if: build_platform != target_platform
+      then:
+        - pip
+        - python
+        - cross-python_${{ target_platform }}
+        - pybind11
+        - numpy
+        - scikit-build
+        - scikit-build-core
+    - pkgconf
+  host:
+    - pip
+    - python
+    - pybind11
+    # run_exports `pybind11-abi ==<internals version>` so pyceres is only
+    # co-installed with pycolmap/pixsfm builds sharing its pybind11 internals
+    - pybind11-abi
+    - scikit-build
+    - scikit-build-core
+    - libboost-headers
+    - ceres-solver
+    - numpy
+    - glog
+    - gflags
+    - libblas
+    - libcblas
+    - eigen
+    - eigen-abi-devel
+  run:
+    - python
+
+tests:
+  - python:
+      imports:
+        - pyceres
+      pip_check: true
+
+about:
+  license: Apache-2.0
+  license_file:
+    - LICENSE
+  summary: pyceres provides minimal Python bindings for the Ceres Solver and the implementation of factor graphs for bundle adjustment and pose graph optimization.
+  homepage: https://github.com/cvg/pyceres
+
+extra:
+  recipe-maintainers:
+    - Tobias-Fischer
